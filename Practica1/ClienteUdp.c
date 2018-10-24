@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ifaddrs.h>
 #include <unistd.h>
 
 void error(char *funcion){
@@ -65,11 +64,13 @@ int main(int argc, char const *argv[])
     addr.sin_port = port;
     addr.sin_addr.s_addr = ip.s_addr;
     socklen_t sizeaddr = sizeof(addr);
-    int senderr = sendto(descriptor, cadena ,sizeof(char)*strlen(cadena),0, (struct sockaddr*)&addr, sizeaddr);
+    int senderr = sendto(descriptor, cadena ,(int) (sizeof(char)*strlen(cadena)),0, (struct sockaddr*)&addr, sizeaddr);
     if(senderr<0){
         error("sendto()");
     }
-    int recverr = recvfrom(descriptor, mensaje, sizeof(char)*512,0, (struct sockaddr*)&addr, &sizeaddr);
+    printf("sent %d bytes to %s port %hd\n",(int)(sizeof(char)*strlen(cadena)),inet_ntoa(addr.sin_addr),port);
+
+    int recverr = recvfrom(descriptor, &mensaje,(int) (sizeof(char)*512), 0, (struct sockaddr*)&addr, &sizeaddr);
     if(recverr < 0){
         error("recvfrom()");
     }
