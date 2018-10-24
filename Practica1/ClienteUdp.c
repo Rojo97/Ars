@@ -23,7 +23,7 @@ int main(int argc, char const *argv[])
     char cadena[] = "Hola";
     struct sockaddr_in localIp;
     struct sockaddr_in addr;
-    char *mensaje = "";
+    char mensaje[] = "";
     if(argc == 2){
         struct servent *portServent = getservbyname("qotd", "udp");
         if( portServent == NULL){
@@ -69,7 +69,6 @@ int main(int argc, char const *argv[])
     if(senderr<0){
         error("sendto()");
     }
-    sizeaddr == -1;
     int recverr = recvfrom(descriptor, mensaje, sizeof(char)*512,0, (struct sockaddr*)&addr, &sizeaddr);
     if(recverr < 0){
         error("recvfrom()");
