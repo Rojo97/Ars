@@ -1,6 +1,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
@@ -17,19 +17,20 @@ int main(int argc, char const *argv[])
     char cadena[] = "Hola";
     struct ifaddrs *localdir;
     struct ifaddrs *tmpdir;
-    struct sockaddr_in *localIp;
+    struct sockaddr_in localIp;
+    struct sockaddr_in addr;
     char *mensaje;
     if(argc < 2|| argc > 4 || argc == 3){
         printf("Numero de argumentos incorrecto");//colocar bien
         fflush(stdout);
         return(-1);
     }else if(argc == 4){
-        if(strcmp(argv[3], "-p") != 0){
+        if(strcmp(argv[2], "-p") != 0){
             printf("Uso incorrecto, para seleccionar puerto indiquelo con -p");//colocar bien o usar por defecto
             fflush(stdout);
             return(-1);
         } else {
-            sscanf(argv[4],"%d", &port);
+            sscanf(argv[3],"%d", &port);
             port = htons(port);
             if(port <0){
                 perror("htons()");
@@ -37,7 +38,7 @@ int main(int argc, char const *argv[])
             }
         }
     } else {
-        struct servent *portServent = getservbyname("QOTD", "UDP");
+        struct servent *portServent = getservbyname("qotd", "udp");
         if( portServent == NULL){
             perror("getservbyname()");
             exit(EXIT_FAILURE);
@@ -49,24 +50,17 @@ int main(int argc, char const *argv[])
         perror("inet_atom()");
         exit(EXIT_FAILURE);
     }
-    descriptor = socket(AF_INET,SOCK_DGRAM,0); //Error
-    getifaddrs(&localdir);
-    tmpdir = localdir;
-    while(tmpdir){
-        if(tmpdir->ifa_addr && tmpdir->ifa_addr->sa_family == AF_INET){
-            localIp = (struct sockaddr_in *) tmpdir->ifa_addr;
-        }
-        tmpdir = tmpdir->ifa_next;
-    }
 
-    bind(descriptor, &localIp,sizeof(localIp));
-    struct sockaddr_in addr;
+    descriptor = socket(AF_INET,SOCK_DGRAM,0); //Error
+    localIp.sin_family = AF_INET;
+    localIp.sin_addr.s_addr = INADDR_ANY;
+    bind(descriptor, (struct sockaddr *) &localIp,sizeof(localIp));
     addr.sin_family = AF_INET;
     addr.sin_port = port;
     addr.sin_addr.s_addr = &ip;
     sendto(descriptor,&cadena,sizeof(char)*strlen(cadena),0, (struct sockaddr*)&addr, sizeof(addr));
     recvfrom(descriptor, mensaje, sizeof(char)*512,0, (struct sockaddr*)&addr, sizeof(addr) );
-    printf(mensaje);
+    printf("%s",mensaje);
     close(descriptor);
     return 0;
 }
