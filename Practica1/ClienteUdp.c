@@ -22,7 +22,7 @@ int main(int argc, char const *argv[])
     char cadena[] = "Hola";
     struct sockaddr_in localIp;
     struct sockaddr_in addr;
-    char mensaje[] = "";
+    char mensaje[512] = "";
     if(argc == 2){
         struct servent *portServent = getservbyname("qotd", "udp");
         if( portServent == NULL){
