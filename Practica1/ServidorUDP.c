@@ -18,11 +18,12 @@ int main(int argc, char const *argv[])
 {
     short port = 0;
     int descriptor = 0;
-    struct in_addr ip;
-    char *cadena;
+    char cadena[] = "";
     struct sockaddr_in localIp;
     struct sockaddr_in addrCliente;
+    socklen_t sizeaddr;
     char mensaje[512] = "";
+    char charbuff;
     char qotd[512];
 
     if(argc == 1){
@@ -54,32 +55,38 @@ int main(int argc, char const *argv[])
     }
     localIp.sin_family = AF_INET;
     localIp.sin_addr.s_addr = INADDR_ANY;
-    localIP.sin_port = port;
+    localIp.sin_port = port;
     int errbind = bind(descriptor, (struct sockaddr *) &localIp,sizeof(localIp));
     if(errbind){
         error("bind()");
     }
-    socklen_t sizeaddr = sizeof(localIP)
-    while(true){
-        int recverr = recvfrom(descriptor, cadena,(int)(sizeof(char)*512), 0, (struct sockaddr*)&addrCliente, &sizeaddr);
+    while(1){
+        sizeaddr = sizeof(struct sockaddr_in);
+        int recverr = recvfrom(descriptor, cadena, (int)(sizeof(char)*512), 0, (struct sockaddr*)&addrCliente, &sizeaddr);
             if(recverr < 0){
-            error("recvfrom()");
+                error("recvfrom()");
             }
         system("/usr/games/fortune -s > /tmp/tt.txt");
         FILE *fich = fopen("/tmp/tt.txt","r");
         int nc = 0;
         do {
-        qotd[nc++] = fgetc(fich);
-        } while(nc < 512-1);
+            charbuff = fgetc(fich);
+            if (charbuff != EOF){
+               qotd[nc++] = charbuff; 
+            }
+        } while(nc < 512-1 && !feof(fich));
         fclose(fich);
-        strcat(mensaje, "Quote Of The Day from vm2538:");
+        qotd[strlen(qotd)]='\0';
+        strcat(mensaje,"Quote Of The Day from vm2538:\n");
         strcat(mensaje, qotd);
+        strcat(mensaje, "\n");
+        printf("%s", mensaje);
         int senderr = sendto(descriptor, mensaje ,(int) (sizeof(char)*strlen(mensaje)),0, (struct sockaddr*)&addrCliente, sizeaddr);
             if(senderr<0){
                 error("sendto()");
             }
-        mensaje = "";    
-        
+        memset(mensaje, 0, 512);
+        memset(qotd,0,512);     
     }
     return 0;
 }

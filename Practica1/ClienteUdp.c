@@ -63,7 +63,7 @@ int main(int argc, char const *argv[])
     addr.sin_family = AF_INET;
     addr.sin_port = port;
     addr.sin_addr.s_addr = ip.s_addr;
-    socklen_t sizeaddr = sizeof(addr);
+    socklen_t sizeaddr = sizeof(struct sockaddr_in);
     int senderr = sendto(descriptor, cadena ,(int) (sizeof(char)*strlen(cadena)),0, (struct sockaddr*)&addr, sizeaddr);
     if(senderr<0){
         error("sendto()");
