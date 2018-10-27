@@ -1,3 +1,4 @@
+// Practica tema 5, Rojo Álvarez Víctor
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
@@ -9,6 +10,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#define BUFFSIZE 512 //Tamaño maximo a recibir
+
+/*  Error llamada tras comprobar que alguna fución ha devuelto un error
+    Recibe como parametro una cadena que indica el nombre de la función que ha fallado
+    Imprime el mensaje de eror correspondiente y finaliza el programa
+*/
 void error(char *funcion){
     perror(funcion);
     exit(EXIT_FAILURE);
@@ -16,65 +23,80 @@ void error(char *funcion){
 
 int main(int argc, char const *argv[])
 {
-    short port = 0;
-    struct in_addr ip;
-    int descriptor = 0;
-    char cadena[] = "Hola";
-    struct sockaddr_in localIp;
-    struct sockaddr_in addr;
-    char mensaje[512] = "";
-    if(argc == 2){
-        struct servent *portServent = getservbyname("qotd", "udp");
+    /*Declaración de las variables a utilizar*/
+    short port = 0; //Guarda el puerto de destino en network byte order
+    int descriptor = 0; //Descriptor del socket
+    char mensaje[BUFFSIZE] = ""; //Cadena del mensaje recibido
+    char cadena[] = "Hola"; //Mensaje enviado
+    struct sockaddr_in localIp; //Dirección local
+    struct sockaddr_in remoteIp;    //Dirección destino
+    struct in_addr ip;  //Ip de destino en network byte order
+    socklen_t sizeRemoteIp; //Tamaño del struct sockaddr_in remoteIp
+    
+    /*Comprobación de argumentos*/
+    if(argc == 2){ //No se indica puesto
+        struct servent *portServent = getservbyname("qotd", "udp"); //Busqueda del puerto por defecto
         if( portServent == NULL){
             error("getservbyname()");
         }
         port = portServent[0].s_port;
-    }else if(argc == 4){
-        if(strcmp(argv[2], "-p") != 0){
-            printf("Uso incorrecto, para seleccionar puerto indiquelo con -p");//colocar bien o usar por defecto
-            fflush(stdout);
+    }else if(argc == 4){ //Se indica puerto
+        if(strcmp(argv[2], "-p") != 0){ //Uso incorrecto del programa
+            printf("Uso incorrecto, el uso del programa es el siguiente:\nqotd-udp-client-Rojo-Alvarez direccion.IP.servidor [-p puerto-servidor]\n");
             return(-1);
         } else {
-            sscanf(argv[3],"%hd", &port);
-            port = htons(port);
-            if(port <0){
-                error("htons()");
-            }
+            sscanf(argv[3],"%hd", &port); 
+            port = htons(port); //Transformación del puerto proporcionado a network byte order
         }
-    } else {
-        printf("Numero de argumentos incorrecto");//colocar bien
-        fflush(stdout);
+    } else { //Argumentos incorrectos
+        printf("Numero de argumentos incorrecto, el uso del programa es el siguiente:\nqotd-udp-client-Rojo-Alvarez direccion.IP.servidor [-p puerto-servidor]\n");
         return(-1);
     }
-    int inetVar = inet_aton(argv[1], &ip);
+
+    /*Transformacion de la ip a network byte order*/
+    int inetVar = inet_aton(argv[1], &ip); 
     if(inetVar <0){
         error("inet_atom()");
     }
+
+    /*Creación del descriptor de socket*/
     descriptor = socket(AF_INET,SOCK_DGRAM,0);
     if(descriptor<0){
         error("socket()");
     }
-    localIp.sin_family = AF_INET;
-    localIp.sin_addr.s_addr = INADDR_ANY;
+
+    /*Rellenamos el struct con los datos locales*/
+    localIp.sin_family = AF_INET; //Tipo de ip
+    localIp.sin_addr.s_addr = INADDR_ANY; //Asignamos cualquier dirección de la maquina host
+
+    /*Bind del socket a la dirección local*/
     int errbind = bind(descriptor, (struct sockaddr *) &localIp,sizeof(localIp));
     if(errbind){
         error("bind()");
     }
-    addr.sin_family = AF_INET;
-    addr.sin_port = port;
-    addr.sin_addr.s_addr = ip.s_addr;
-    socklen_t sizeaddr = sizeof(struct sockaddr_in);
-    int senderr = sendto(descriptor, cadena ,(int) (sizeof(char)*strlen(cadena)),0, (struct sockaddr*)&addr, sizeaddr);
+    
+    /*Rellenamos el struct con los datos de destino*/
+    remoteIp.sin_family = AF_INET;  //Tipo de ip
+    remoteIp.sin_port = port;   //Puerto de destino
+    remoteIp.sin_addr.s_addr = ip.s_addr;   //Ip de destino
+    sizeRemoteIp = sizeof(struct sockaddr_in);
+
+    /*Enviamos un mensaje con el texto contenido en cadena al destino indicado*/
+    int senderr = sendto(descriptor, cadena ,(int) (sizeof(char)*strlen(cadena)),0, (struct sockaddr*)&remoteIp, sizeRemoteIp);
     if(senderr<0){
         error("sendto()");
     }
-    printf("sent %d bytes to %s port %hd\n",(int)(sizeof(char)*strlen(cadena)),inet_ntoa(addr.sin_addr),port);
 
-    int recverr = recvfrom(descriptor, &mensaje,(int) (sizeof(char)*512), 0, (struct sockaddr*)&addr, &sizeaddr);
+    /*Recibimos la respuesta y la guardamos en mensaje*/
+    int recverr = recvfrom(descriptor, &mensaje,(int) (sizeof(char)*BUFFSIZE), 0, (struct sockaddr*)&remoteIp, &sizeRemoteIp);
     if(recverr < 0){
         error("recvfrom()");
     }
+
+    /*Imprimimos el mensaje*/
     printf("%s",mensaje);
+
+    /*Cerramos el socket*/
     int closeerr = close(descriptor);
     if(closeerr < 0){
         error("close()");
