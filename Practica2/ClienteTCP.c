@@ -1,4 +1,4 @@
-// Practica tema 5, Rojo Álvarez Víctor
+// Practica tema 6, Rojo Álvarez Víctor
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
@@ -69,13 +69,13 @@ int main(int argc, char const *argv[])
     remoteIp.sin_addr.s_addr = ip.s_addr;   //Ip de destino
     sizeRemoteIp = sizeof(remoteIp);
 
-    /*Enviamos un mensaje con el texto contenido en cadena al destino indicado*/
+    /*Conectamos con el destino indicado*/
     int connecterr = connect(descriptor, (struct sockaddr*)&remoteIp, sizeRemoteIp);
     if(connecterr<0){
         error("connect()");
     }
 
-    /*Recibimos la respuesta y la guardamos en mensaje*/
+    /*Esperamos que nos manden algo y lo guardamos en mensaje*/
     int recverr = recv(descriptor, &mensaje,(int) (sizeof(char)*BUFFSIZE), 0);
     if(recverr < 0){
         error("recvfrom()");
@@ -84,7 +84,7 @@ int main(int argc, char const *argv[])
     /*Imprimimos el mensaje*/
     printf("%s",mensaje);
 
-
+    /*Indicamos que queremos cerrar la conexión*/
     int shuterr = shutdown(descriptor, SHUT_RDWR);
     if(shuterr < 0){
         error("shutdown()");
