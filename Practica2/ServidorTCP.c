@@ -107,7 +107,7 @@ int main(int argc, char const *argv[])
         /*Creamos un hijo para atender la petición*/
         if(fork() == 0){
             /*Cada hijo declara sus variables*/
-            char mensaje[BUFFSIZE] = ""; //Mensaje a mandar
+            char mensaje[BUFFSIZE]; //Mensaje a mandar
             char charbuff; //Buffer para el caracter leido desde fichero
             char qotd[BUFFSIZE]; //Cadena con el qotd a mandar
 
@@ -123,16 +123,17 @@ int main(int argc, char const *argv[])
                     qotd[nc++] = charbuff; 
                 }
             } while(nc < BUFFSIZE-1 && !feof(fich)); //Se repite hasta fin de fichero o alcanzar BUFFSIZE
-            qotd[nc++] = 0; //Añadimos un cero al final de la nota
+            qotd[nc++] = '\0'; //Añadimos un cero al final de la nota
 
             fclose(fich); //Cerramos el fichero
 
-            /*Creacion de la cadena a mandar*/      
-            strcpy(mensaje,"Quote Of The Day from vm2538:\n"); //Primero cabecera del mensaje
+            /*Creacion de la cadena a mandar*/
+            memset(mensaje, 0, sizeof(mensaje));    
+            strcat(mensaje,"Quote Of The Day from vm2538:\n"); //Primero cabecera del mensaje
             strcat(mensaje, qotd); //Segundo la nota generada por fortune
 
             /*Envio de la cadena mensaje a la direccion de origen del mensaje recibido*/
-            int senderr = send(descriptorHilo, mensaje ,(int) (sizeof(char)*strlen(mensaje)),0);
+            int senderr = send(descriptorHilo, mensaje ,(int) (sizeof(char) * BUFFSIZE),0);
             if(senderr<0){
                 error("sendto()");
             }
