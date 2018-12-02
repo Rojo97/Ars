@@ -10,13 +10,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/** TODO
- * - Comentarios
- * - Borrar el archivo en caso de error ya que es corrupto
- * - 100 caractes nombre
- * - Opcion -v
-*/
-
 #define BUFFSIZE 516 //Tamaño maximo a recibir o enviar
 #define ACKSIZE 4 //Tamaño del paquete ack
 
@@ -61,10 +54,16 @@ int main(int argc, char **argv)
             printf("Uso incorrecto, el uso del programa es el siguiente:\ntftp-client ip-servidor {-r|-w} archivo [-v]\n");
             return(-1);
         } 
-        if(argc == 5 && strcmp(argv[4], "-v")==0){ //Modo -v
-            vFlag = 1;
-        } else {
-            printf("Uso incorrecto, el uso del programa es el siguiente:\ntftp-client ip-servidor {-r|-w} archivo [-v]\n");
+        if(argc == 5 ){ //Cinco argumentos
+            if(strcmp(argv[4], "-v")==0){ //El ultimo es -v
+                vFlag = 1;
+            } else{ //Si no lo es
+                printf("Uso incorrecto, el uso del programa es el siguiente:\ntftp-client ip-servidor {-r|-w} archivo [-v]\n");
+                return(-1);
+            }
+        }
+        if (strlen(argv[3])>100){
+            printf("Nombre de archivo demasiado grande, el limite son 100 caracteres\n");
             return(-1);
         }
     } else { //Argumentos incorrectos
