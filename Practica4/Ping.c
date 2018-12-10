@@ -11,8 +11,6 @@
 #include <unistd.h>
 #include "ip-icmp-ping.h"
 
-#define BUFFSIZE 512 //Tamaño maximo a recibir
-
 /*  Error llamada tras comprobar que alguna fución ha devuelto un error
     Recibe como parametro una cadena que indica el nombre de la función que ha fallado
     Imprime el mensaje de eror correspondiente y finaliza el programa
@@ -55,7 +53,7 @@ int main(int argc, char const *argv[])
         printf("Numero de argumentos incorrecto, el uso del programa es el siguiente:\nqotd-udp-client-Rojo-Alvarez direccion.IP.servidor [-p puerto-servidor]\n");
         return(-1);
     }else if(argc == 3){ //Se indica puerto
-        if(strcmp(argv[2], "-v") != 0){ //Uso incorrecto del programa
+        if(strcmp(argv[2], "-v") == 0){ //Uso incorrecto del programa
             vFlag=1;
         } else {
             printf("Uso incorrecto\n");
@@ -90,22 +88,22 @@ int main(int argc, char const *argv[])
     sizeRemoteIp = sizeof(struct sockaddr_in);
 
     /*Rellenamos el paquete a enviar*/
+    if(vFlag==1) printf("-> Generando cabecera ICMP.\n");
     memset(&echoRequest, 0, sizeof(echoRequest));
     memset(&echoResponse, 0, sizeof(ECHOResponse));
     echoRequest.icmpHeader.Type = 8;
     echoRequest.ID = getpid();
     strcpy(echoRequest.payload, "Hola, soy el payload");
-    printf("Check antes: %d\n", checksumICMP(&echoRequest));
     echoRequest.icmpHeader.Checksum = checksumICMP(&echoRequest);
-    printf("Check despues: %d\n", checksumICMP(&echoRequest));
-    // if(checksumICMP(&echoRequest)==0){
-    //     printf("FUNCIONA\n");
-    //     return(0);
-    // }else{
-    //     printf("No funciona\n");
-    //     return(0);
-    // }
-
+    if(vFlag == 1) {
+        printf("-> Type: %d.\n", echoRequest.icmpHeader.Type);
+        printf("-> Code: %d.\n", echoRequest.icmpHeader.Code);
+        printf("-> Identifier (pid): %d.\n", echoRequest.ID);
+        printf("-> Seq. number: %d.\n", echoRequest.SeqNumber);
+        printf("-> Cadena a enviar: %s.\n", echoRequest.payload);
+        printf("-> Checksum: 0x%x.\n", echoRequest.icmpHeader.Checksum);
+        printf("-> Tamaño total del paquete ICMP: %d.\n", (int) sizeof(echoRequest));
+    }
 
     /*Enviamos un mensaje con el texto contenido en cadena al destino indicado*/
      int senderr = sendto(descriptor, &echoRequest ,(int) sizeof(ECHORequest),0, (struct sockaddr*)&remoteIp, sizeRemoteIp);
@@ -119,7 +117,14 @@ int main(int argc, char const *argv[])
      if(recverr < 0){
          error("recvfrom()");
      }
-     printf("Respuesta recibida desde %s\n", inet_ntoa(remoteIp.sin_addr));
+    printf("Respuesta recibida desde %s\n", inet_ntoa(remoteIp.sin_addr));
+
+    if(vFlag == 1){
+        printf("-> Tamaño de la respuesta: %d.\n", recverr);
+        printf("-> Cadena recibida: %s.\n", echoResponse.payload);
+        printf("-> Identifier (pid): %d.\n", echoResponse.ID);
+        printf("-> TTL: %d.\n", echoResponse.ipHeader.TTL);
+    }
 
     /*Cerramos el socket*/
     int closeerr = close(descriptor);
