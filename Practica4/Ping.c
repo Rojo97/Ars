@@ -98,13 +98,13 @@ int main(int argc, char const *argv[])
     printf("Check antes: %d\n", checksumICMP(&echoRequest));
     echoRequest.icmpHeader.Checksum = checksumICMP(&echoRequest);
     printf("Check despues: %d\n", checksumICMP(&echoRequest));
-    if(checksumICMP(&echoRequest)==0){
-        printf("FUNCIONA\n");
-        return(0);
-    }else{
-        printf("No funciona\n");
-        return(0);
-    }
+    // if(checksumICMP(&echoRequest)==0){
+    //     printf("FUNCIONA\n");
+    //     return(0);
+    // }else{
+    //     printf("No funciona\n");
+    //     return(0);
+    // }
 
 
     /*Enviamos un mensaje con el texto contenido en cadena al destino indicado*/
@@ -112,12 +112,14 @@ int main(int argc, char const *argv[])
      if(senderr<0){
          error("sendto()");
     }
+    printf("Paquete ICMP enviado a %s\n", argv[1]);
 
     /*Recibimos la respuesta y la guardamos en mensaje*/
     int recverr = recvfrom(descriptor, &echoResponse,(int) sizeof(ECHOResponse), 0, (struct sockaddr*)&remoteIp, &sizeRemoteIp);
      if(recverr < 0){
          error("recvfrom()");
      }
+     printf("Respuesta recibida desde %s\n", inet_ntoa(remoteIp.sin_addr));
 
     /*Cerramos el socket*/
     int closeerr = close(descriptor);
