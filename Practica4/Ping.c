@@ -24,7 +24,8 @@ unsigned short int checksumICMP(ECHORequest *echoRequest){
     unsigned short int *puntero =(unsigned short int *) echoRequest;
     int numShorts = sizeof(ECHORequest)/2;
     unsigned int acumulador = 0;
-    for(int i = 0; i < numShorts; i++){
+    int i;
+    for( i = 0; i < numShorts; i++){
         acumulador = acumulador + (unsigned int) *puntero;
         puntero ++;
     }
@@ -102,7 +103,7 @@ int main(int argc, char const *argv[])
         printf("-> Seq. number: %d.\n", echoRequest.SeqNumber);
         printf("-> Cadena a enviar: %s.\n", echoRequest.payload);
         printf("-> Checksum: 0x%x.\n", echoRequest.icmpHeader.Checksum);
-        printf("-> Tamaño total del paquete ICMP: %d.\n", (int) sizeof(echoRequest));
+        printf("-> Tamanio total del paquete ICMP: %d.\n", (int) sizeof(echoRequest));
     }
 
     /*Enviamos un mensaje con el texto contenido en cadena al destino indicado*/
@@ -110,6 +111,7 @@ int main(int argc, char const *argv[])
      if(senderr<0){
          error("sendto()");
     }
+    
     printf("Paquete ICMP enviado a %s\n", argv[1]);
 
     /*Recibimos la respuesta y la guardamos en mensaje*/
@@ -117,14 +119,30 @@ int main(int argc, char const *argv[])
      if(recverr < 0){
          error("recvfrom()");
      }
-    printf("Respuesta recibida desde %s\n", inet_ntoa(remoteIp.sin_addr));
 
+    printf("Respuesta recibida desde %s\n", inet_ntoa(remoteIp.sin_addr));
     if(vFlag == 1){
-        printf("-> Tamaño de la respuesta: %d.\n", recverr);
+        printf("-> Tamanio de la respuesta: %d.\n", recverr);
         printf("-> Cadena recibida: %s.\n", echoResponse.payload);
         printf("-> Identifier (pid): %d.\n", echoResponse.ID);
         printf("-> TTL: %d.\n", echoResponse.ipHeader.TTL);
     }
+
+    unsigned char tipo = echoResponse.icmpHeader.Type;
+    unsigned char code = echoResponse.icmpHeader.Code;
+    printf("Descripcion de la respuesta: ");
+    //TODO descripción error
+    switch (tipo){
+        case 0:
+            if(code == 0) printf("restpuesta correcta ");
+            break;
+        default:
+            printf("error ");
+    }
+
+    printf("(type %d, code %d).\n", tipo, code);
+
+
 
     /*Cerramos el socket*/
     int closeerr = close(descriptor);
